@@ -7,10 +7,10 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/robinbraemer/event"
+	"go.minekube.com/gate/pkg/reload"
 
 	"go.minekube.com/gate/pkg/gate/config"
 	"go.minekube.com/gate/pkg/internal/hashutil"
-	"go.minekube.com/gate/pkg/internal/reload"
 	"go.minekube.com/gate/pkg/runtime/process"
 	connectcfg "go.minekube.com/gate/pkg/util/connectutil/config"
 )

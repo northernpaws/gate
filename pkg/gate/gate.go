@@ -14,6 +14,7 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/robinbraemer/event"
 	"github.com/spf13/viper"
+	reload2 "go.minekube.com/gate/pkg/reload"
 	"gopkg.in/yaml.v3"
 
 	"go.minekube.com/gate/pkg/bridge"
@@ -22,7 +23,6 @@ import (
 	jconfig "go.minekube.com/gate/pkg/edition/java/config"
 	jproxy "go.minekube.com/gate/pkg/edition/java/proxy"
 	"go.minekube.com/gate/pkg/gate/config"
-	"go.minekube.com/gate/pkg/internal/reload"
 	"go.minekube.com/gate/pkg/runtime/process"
 	connectcfg "go.minekube.com/gate/pkg/util/connectutil/config"
 	errorsutil "go.minekube.com/gate/pkg/util/errs"
@@ -59,10 +59,10 @@ func New(options Options) (gate *Gate, err error) {
 	if eventMgr == nil {
 		eventMgr = event.Nop
 	}
-	reload.Map(eventMgr, func(c *config.Config) *jconfig.Config {
+	reload2.Map(eventMgr, func(c *config.Config) *jconfig.Config {
 		return &c.Editions.Java.Config
 	})
-	reload.Map(eventMgr, func(c *config.Config) *connectcfg.Config {
+	reload2.Map(eventMgr, func(c *config.Config) *connectcfg.Config {
 		return &c.Connect
 	})
 
@@ -267,7 +267,7 @@ func setupAutoConfigReload(
 	log.Info("auto config reload enabled", "path", path)
 	prevCfg := initialCfg
 	// Watch config file for changes
-	return reload.Watch(ctx, path, func() error {
+	return reload2.Watch(ctx, path, func() error {
 		cfg, err := LoadConfig(Viper)
 		if err != nil {
 			return err
@@ -275,7 +275,7 @@ func setupAutoConfigReload(
 		if err = validateConfig(log, cfg); err != nil {
 			return err
 		}
-		reload.FireConfigUpdate(mgr, cfg, prevCfg)
+		reload2.FireConfigUpdate(mgr, cfg, prevCfg)
 		prevCfg = cfg
 		return nil
 	})

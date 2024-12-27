@@ -7,12 +7,12 @@ import (
 
 	"github.com/go-logr/logr"
 	"github.com/robinbraemer/event"
+	"go.minekube.com/gate/pkg/reload"
 
 	"go.minekube.com/gate/pkg/edition/java/proxy"
 	"go.minekube.com/gate/pkg/gate/config"
 	"go.minekube.com/gate/pkg/internal/api"
 	"go.minekube.com/gate/pkg/internal/hashutil"
-	"go.minekube.com/gate/pkg/internal/reload"
 	"go.minekube.com/gate/pkg/runtime/process"
 )
 
