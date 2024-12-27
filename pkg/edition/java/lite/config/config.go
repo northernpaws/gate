@@ -24,7 +24,15 @@ type (
 	Config struct {
 		Enabled bool    `yaml:"enabled,omitempty" json:"enabled,omitempty"`
 		Routes  []Route `yaml:"routes,omitempty" json:"routes,omitempty"`
+
+		Routers []Router `yaml:"-" json:"-"`
 	}
+
+	Router interface {
+		// FindRoute attempts to find a valid route for the provided host.
+		FindRoute(host string) (*Route, error)
+	}
+
 	Route struct {
 		Host          configutil.SingleOrMulti[string] `json:"host,omitempty" yaml:"host,omitempty"`
 		Backend       configutil.SingleOrMulti[string] `json:"backend,omitempty" yaml:"backend,omitempty"`

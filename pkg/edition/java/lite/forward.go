@@ -29,6 +29,7 @@ import (
 // Forward forwards a client connection to a matching backend route.
 func Forward(
 	dialTimeout time.Duration,
+	routers []config.Router,
 	routes []config.Route,
 	log logr.Logger,
 	client netmc.MinecraftConn,
@@ -37,7 +38,7 @@ func Forward(
 ) {
 	defer func() { _ = client.Close() }()
 
-	log, src, route, nextBackend, err := findRoute(routes, log, client, handshake)
+	log, src, route, nextBackend, err := findRoute(routers, routes, log, client, handshake)
 	if err != nil {
 		errs.V(log, err).Info("failed to find route", "error", err)
 		return
@@ -121,6 +122,7 @@ func pipe(log logr.Logger, src, dst net.Conn) {
 type nextBackendFunc func() (backendAddr string, log logr.Logger, ok bool)
 
 func findRoute(
+	routers []config.Router,
 	routes []config.Route,
 	log logr.Logger,
 	client netmc.MinecraftConn,
@@ -145,7 +147,23 @@ func findRoute(
 		"protocol", proto.Protocol(handshake.ProtocolVersion).String(),
 	)
 
-	host, route := FindRoute(clearedHost, routes...)
+	var host string
+
+	// Attempt to dynamically find an appropriate host for the route.
+	for i := range routers {
+		route, err = routers[i].FindRoute(clearedHost)
+		if err != nil {
+			return log.V(1), src, nil, nil, fmt.Errorf("failed to request route for host %s", clearedHost)
+		}
+
+		host = route.Host[0]
+	}
+
+	// If no routers matched the host to a route, check the statically defined routes.
+	if route == nil {
+		host, route = FindRoute(clearedHost, routes...)
+	}
+
 	if route == nil {
 		return log.V(1), src, nil, nil, fmt.Errorf("no route configured for host %s", clearedHost)
 	}
@@ -267,6 +285,7 @@ func update(pc *proto.PacketContext, h *packet.Handshake) {
 // ResolveStatusResponse resolves the status response for the matching route and caches it for a short time.
 func ResolveStatusResponse(
 	dialTimeout time.Duration,
+	routers []config.Router,
 	routes []config.Route,
 	log logr.Logger,
 	client netmc.MinecraftConn,
@@ -274,7 +293,7 @@ func ResolveStatusResponse(
 	handshakeCtx *proto.PacketContext,
 	statusRequestCtx *proto.PacketContext,
 ) (logr.Logger, *packet.StatusResponse, error) {
-	log, src, route, nextBackend, err := findRoute(routes, log, client, handshake)
+	log, src, route, nextBackend, err := findRoute(routers, routes, log, client, handshake)
 	if err != nil {
 		return log, nil, err
 	}
